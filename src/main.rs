@@ -1,5 +1,5 @@
-use rusty_engine::{mouse, prelude::*};
-
+use rand::prelude::*;
+use rusty_engine::prelude::*;
 struct GameState {
     high_score: u32,
     score: u32,
@@ -20,6 +20,7 @@ impl Default for GameState {
 fn main() {
     let mut game = Game::new();
 
+    game.audio_manager.play_music(MusicPreset::Classy8Bit, 0.15);
     let player = game.add_sprite("player", SpritePreset::RacingCarBlue);
     player.translation = Vec2::new(0.0, 0.0);
     player.rotation = std::f32::consts::FRAC_PI_2;
@@ -33,7 +34,7 @@ fn main() {
     high_score.translation = Vec2::new(-520.0, 320.0);
     // set up game here
     game.add_logic(game_logic);
-    game.run((GameState::default()));
+    game.run(GameState::default());
 }
 
 fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
@@ -54,6 +55,7 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
                 let high_score = engine.texts.get_mut("high_score").unwrap();
                 high_score.value = format!("High Score: {}", game_state.high_score);
             }
+            engine.audio_manager.play_sfx(SfxPreset::Minimize2, 0.25);
         }
     }
 
@@ -101,6 +103,14 @@ fn game_logic(engine: &mut Engine, game_state: &mut GameState) {
         }
     }
 
+    if game_state.spawn_timer.tick(engine.delta).just_finished() {
+        let label = format!("ferris{}", game_state.ferris_index);
+        game_state.ferris_index += 1;
+        let ferris = engine.add_sprite(label.clone(), SpritePreset::RacingCarYellow);
+        ferris.translation.x = thread_rng().gen_range(-550.0..550.0);
+        ferris.translation.y = thread_rng().gen_range(-325.0..325.0);
+        ferris.collision = true;
+    }
     // Reset score
     if engine.keyboard_state.just_pressed(KeyCode::R) {
         game_state.score = 0;
